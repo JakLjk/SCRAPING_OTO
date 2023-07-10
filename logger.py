@@ -2,7 +2,7 @@ import logging
 from config import Config
 
 
-if Config.LOG_FILE_PATH_NAME:
+if Config.LoggingSetup.LOG_FILE_PATH_NAME:
         handlers = [logging.FileHandler(Config.LOG_FILE_PATH_NAME),
                     logging.StreamHandler()]
 else: 

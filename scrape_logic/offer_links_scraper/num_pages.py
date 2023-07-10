@@ -4,9 +4,9 @@ from response_methods import pick_selenium_driver
 from config import Config
 
 def get_num_pages():
-    run_headless = Config.DRIVER_HEADLESS
-    browser_type = Config.DRIVER_TYPE
-    first_page_link = Config.FIRST_OFFER_PAGE_SCROLL_LINK
+    run_headless = Config.SeleniumDriverSetup.DRIVER_HEADLESS
+    browser_type = Config.SeleniumDriverSetup.DRIVER_TYPE
+    first_page_link = Config.LinksSetup.FIRST_OFFER_PAGE_SCROLL_LINK
 
 
     driver = pick_selenium_driver(browser_type=browser_type, 
