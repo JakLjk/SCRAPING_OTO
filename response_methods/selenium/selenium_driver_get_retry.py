@@ -10,7 +10,7 @@ def selenium_get_retry(driver:WebDriver,
                        retry_intervals_seconds=2):
     """Allows user to retry get functions everal times.
     user can specify time betweeen each retry
-    After failing designeated number of times, will return None"""
+    After failing with data fetch several times will raise WebDriverException error"""
 
     retries = 0
     while retries <= num_retries:
