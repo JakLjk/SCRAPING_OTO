@@ -11,17 +11,9 @@ from db import engine, metadata_obj, links_table
 sys.path.append("/Users/jakub/VS_Projects/SCRAPING_OTO/response_methods")
 
 def main():
-    # test_statement = insert(links_table).values(
-    # Scrape_Date=func.current_date(),
-    # Link="TESTX1XXD21",
-    # Was_Scraped=True)
 
-    # with engine.connect() as conn:
-    #     conn.execute(test_statement)
-    #     conn.commit()
-
-    scrape_init(scrape_type="links")
-
+    # scrape_init(scrape_type="links")
+    scrape_init(scrape_type="offers")
 
 if __name__=="__main__":
     main()

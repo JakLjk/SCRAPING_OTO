@@ -9,7 +9,6 @@ links_table = Table(
     Column("ID_L", Integer, autoincrement=True, primary_key=True),
     Column("Scrape_Date", Date),
     Column("Link", Text),
-    # TODO delete this column
-    Column("Was_Scraped", Boolean)
+    Column("Scrape_Status", Text)
 
 )

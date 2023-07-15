@@ -75,7 +75,7 @@ def scrape_links():
         statement = insert(links_table)
         link_rows_to_pass_to_db = [{"Scrape_Date":curr_date,
                                     "Link":link, 
-                                    "Was_Scraped":False} 
+                                    "Scrape_Status":"Not_Scraped"} 
                                     for link in all_links]
         logger.info(f"Passing {len(link_rows_to_pass_to_db)} to database.")
         with engine.connect() as conn:
@@ -83,6 +83,6 @@ def scrape_links():
             conn.commit()
             logger.info("Connection executed, links passed")
             # TODO Return last insert and count inserted columns, to see if all were passed
-            last_return = insert(links_table).returning(
-                links_table.c.Link)
+            # last_return = insert(links_table).returning(
+            #     links_table.c.Link)
             # print(last_return)
