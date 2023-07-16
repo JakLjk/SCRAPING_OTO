@@ -1,6 +1,6 @@
 import sqlalchemy as db
 from sqlalchemy import MetaData
-from .dbschema import metadata_obj, links_table
+from .dbschema import metadata_obj, links_table, raw_offer_data_table
 
 # TODO add credentials json loader
 

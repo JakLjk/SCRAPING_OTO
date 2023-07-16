@@ -13,6 +13,7 @@ sys.path.append("/Users/jakub/VS_Projects/SCRAPING_OTO/response_methods")
 def main():
 
     # scrape_init(scrape_type="links")
+    
     scrape_init(scrape_type="offers")
 
 if __name__=="__main__":

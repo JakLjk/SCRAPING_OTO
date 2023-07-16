@@ -20,6 +20,8 @@ def scrape_links():
     num_of_retries = Config.LinksScrapingSetup.NUMBER_OF_RETRIES_FOR_EACH_LINKS_PAGE
     interval_between_retries = Config.LinksScrapingSetup.SLEEP_SECONDS_BETWEEN_RETIRES
     driver_type = Config.SeleniumDriverSetup.DRIVER_TYPE
+    # TODO add variable do config
+    run_headless = True
 
     logger.info("Initializing links scraping process.")
     logger.info("Fetching number of pages to parse.")
@@ -38,7 +40,7 @@ def scrape_links():
     number_of_subsequent_failures = 0
     for page_link in separate_page_links:
         logger.info(f"Fetching page data for link: {page_link}")
-        driver = pick_selenium_driver(driver_type, True)
+        driver = pick_selenium_driver(driver_type, run_headless)
         try:
             selenium_get_retry(driver=driver, link=page_link, 
                                             num_retries=num_of_retries, 
