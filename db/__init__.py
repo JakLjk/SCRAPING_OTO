@@ -4,8 +4,8 @@ from .dbschema import metadata_obj, links_table, raw_offer_data_table
 
 # TODO add credentials json loader
 
-__db_username = "xxx"
-__db_password = "xxx"
+__db_username = "adm"
+__db_password = "321"
 __host = "localhost"
 __database = "otomoto"
 
