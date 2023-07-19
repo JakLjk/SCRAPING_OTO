@@ -1,4 +1,4 @@
-from sqlalchemy import MetaData, Table, Column, Integer, String, Date, Text, Boolean
+from sqlalchemy import MetaData, Table, Column, Integer, String, Date, Text, Boolean, DATETIME
 from sqlalchemy.dialects.mysql import LONGTEXT
 metadata_obj = MetaData()
 
@@ -7,7 +7,7 @@ links_table = Table(
     "links",
     metadata_obj,
     Column("ID_L", Integer, autoincrement=True, primary_key=True),
-    Column("Scrape_Date", Date),
+    Column("Scrape_DateTime", DATETIME),
     Column("Link", Text),
     Column("Scrape_Status", Text))
 
@@ -15,7 +15,7 @@ raw_offer_data_table = Table(
     "raw_offer_data",
     metadata_obj,
     Column("ID_O",Integer, autoincrement=True, primary_key=True),
-    Column("DATE",Date),
+    Column("Scrape_DateTime",DATETIME),
     Column("Raw_Data", LONGTEXT),
     Column("Used_Link", Text))
 

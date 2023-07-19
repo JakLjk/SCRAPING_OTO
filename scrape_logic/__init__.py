@@ -1,1 +1,2 @@
-from .main_scrape_logic import scrape_init
+from .offer_links_scraper.scrape_links_logic import scrape_links
+from .offer_main_scraper.scrape_offer_logic import scrape_offer

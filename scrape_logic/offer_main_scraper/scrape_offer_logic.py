@@ -1,4 +1,3 @@
-# TODO DB lock logic - for blocking link when one of machines is working on it 
 from logger import logger
 
 from config import Config
@@ -20,9 +19,6 @@ from datetime import datetime
 
 
 def scrape_offer():
-    # TODO Add this functionality:
-    scrape_previously_scraped = False
-    interval_between_retries = 2
     # Wait time for new link to scrape, if there are no links to scrape available
     wait_for_link_to_scrape = Config.OffersScrapingSetup.WAIT_TIME_FOR_NEW_LINKS_TO_SCRAPE
 
@@ -69,7 +65,7 @@ def scrape_offer():
 
             logger.info(f"Inserting offer raw data into db.")
             # Insert data into offer raw table
-            curr_date = datetime.today().strftime('%Y-%m-%d')
+            curr_date = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
             statement = (insert(raw_offer_data_table)
                         .values(DATE=curr_date,
                             Raw_Data=page_html,

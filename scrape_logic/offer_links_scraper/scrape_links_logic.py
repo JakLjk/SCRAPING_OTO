@@ -16,18 +16,24 @@ import bs4
 from datetime import datetime
 
 from sqlalchemy import insert, func
+from sqlalchemy.orm import Session
+
 from db import engine, links_table
 
 
 def scrape_links():
-    num_of_retries = Config.LinksScrapingSetup.NUMBER_OF_RETRIES_FOR_EACH_LINKS_PAGE
-    interval_between_retries = Config.LinksScrapingSetup.SLEEP_SECONDS_BETWEEN_RETIRES
     driver_type = Config.SeleniumDriverSetup.DRIVER_TYPE
     run_headless = Config.SeleniumDriverSetup.DRIVER_HEADLESS
-    # TODO add to config
-    max_delay_when_waiting_for_element_load = 3
-    max_accepted_subsequent_failed_link_scrape_failures = 3
-    max_accepted_subsequent_failed_0_links_scraped_failures = 3
+    num_of_retries = Config.LinksScrapingSetup.NUMBER_OF_RETRIES_FOR_EACH_LINKS_PAGE
+    interval_between_retries = Config.LinksScrapingSetup.SLEEP_SECONDS_BETWEEN_RETIRES
+    scrape_existing = Config.LinksScrapingSetup.SCRAPE_EXISTING_IN_DB
+    max_delay_when_waiting_for_element_load = \
+        Config.LinksScrapingSetup.MAX_TIME_WHEN_WAITING_FOR_ELEM_LOAD
+    max_accepted_subsequent_failed_link_scrape_failures = \
+        Config.LinksScrapingSetup.MAX_ACCEPTED_SUBSEQUENT_FAILED_LINK_SCRAPE_FAILURES
+    max_accepted_subsequent_failed_0_links_scraped_failures = \
+        Config.LinksScrapingSetup.MAX_ACCEPTED_SUBSEQUENT_FAILED_0_LINKS_FAILURES
+
 
     logger.info("Initializing links scraping process.")
     logger.info("Fetching number of pages to parse.")
@@ -43,9 +49,13 @@ def scrape_links():
     # Allows for tracking subsequent failuers in scraping proces, in order to
     # break from look if the whole scraping process does not get response for subsequenst amount
     # of retries
+    num_of_pages_parsed = 0
     number_of_subsequent_fetch_link_failures = 0
     number_of_subsequent_0_links_passed_error = 0
     for page_link in separate_page_links:
+        num_of_pages_parsed += 1 
+        logger.info("===============================")
+        logger.info(f"Parsing page {num_of_pages_parsed} / {num_pages}")
         logger.info(f"Fetching page data for link: {page_link}")
         driver = pick_selenium_driver(driver_type, run_headless)
         try:
@@ -96,26 +106,37 @@ def scrape_links():
             continue
         all_links = [elem.find("a")['href'] for elem in all_link_elems]
 
+
         if all_links == 0:
             if number_of_subsequent_0_links_passed_error > max_accepted_subsequent_failed_0_links_scraped_failures:
                 raise AttributeError(f"Number of subsequent scraping iterations that return 0 links is higher than \
                                      {number_of_subsequent_0_links_passed_error}, which is max number specified in config")
         number_of_subsequent_0_links_passed_error = 0
-        
-        #Put all links into database
-        curr_date = datetime.today().strftime('%Y-%m-%d')
-        statement = insert(links_table)
-        link_rows_to_pass_to_db = [{"Scrape_Date":curr_date,
-                                    "Link":link, 
-                                    "Scrape_Status":"Not_Scraped"} 
-                                    for link in all_links]
-        logger.info(f"Passing {len(link_rows_to_pass_to_db)} links to database.")
-        with engine.connect() as conn:
-            conn.execute(statement,link_rows_to_pass_to_db)
-            conn.commit()
-            logger.info("Connection executed, links passed")
-            
-            # TODO Return last insert and count inserted columns, to see if all were passed
-            # last_return = insert(links_table).returning(
-            #     links_table.c.Link)
-            # print(last_return)
+    
+
+        with Session(engine) as session: 
+            # Check if lin already in db, to see if there's need to pass it again
+            if not scrape_existing:
+                all_links = [link for link in all_links if not link_exists(link, session)]
+
+            #Put all links into database
+            curr_date = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+            statement = insert(links_table)
+            link_rows_to_pass_to_db = [{"Scrape_DateTime":curr_date,
+                                        "Link":link, 
+                                        "Scrape_Status":"Not_Scraped"} 
+                                        for link in all_links]
+            logger.info(f"Passing {len(link_rows_to_pass_to_db)} links to database.")
+
+            session.execute(statement,link_rows_to_pass_to_db)
+            session.commit()
+            rows_left = (session.query(links_table)
+                .filter(links_table.c.Scrape_Status=="Not_Scraped")
+                .distinct(links_table.c.Link)
+                .count())
+            logger.info(f"There are currently {rows_left} links to be scraped in database.")
+
+
+def link_exists(link:str, live_session:Session) -> bool:
+    exists = live_session.query(links_table.c.Link==link).count()
+    return bool(exists)
