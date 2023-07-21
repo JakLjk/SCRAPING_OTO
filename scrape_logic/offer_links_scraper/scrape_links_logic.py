@@ -9,7 +9,6 @@ from selenium.common.exceptions import TimeoutException
 
 from response_methods import selenium_get_retry
 from response_methods import pick_selenium_driver
-from .num_pages import get_num_pages
 
 import bs4
 
@@ -20,8 +19,10 @@ from sqlalchemy.orm import Session
 
 from db import engine, links_table
 
+from .generate_links_to_scrape import generate_links_to_scrape
 
 def scrape_links():
+
     driver_type = Config.SeleniumDriverSetup.DRIVER_TYPE
     run_headless = Config.SeleniumDriverSetup.DRIVER_HEADLESS
     num_of_retries = Config.LinksScrapingSetup.NUMBER_OF_RETRIES_FOR_EACH_LINKS_PAGE
@@ -36,23 +37,24 @@ def scrape_links():
 
 
     logger.info("Initializing links scraping process.")
-    logger.info("Fetching number of pages to parse.")
-    num_pages = get_num_pages()
-    logger.info(f"There are {num_pages} pages to parse.")
+    # logger.info("Fetching number of pages to parse.")
+    # num_pages = get_num_pages()
+    # logger.info(f"There are {num_pages} pages to parse.")
     logger.info(f"Generating dummy link for every page with offer links...")
+    links_to_scrape = generate_links_to_scrape()
     # List of links that have to be loaded in order to fetch information about all offers
     # Links are in reverse order, to fetch the last offers that are listed as first, which reduces
     # Problems with last page index moving forwards or backwards
-    separate_page_links = (Config.LinksSetup.OFFER_SCROLL_LIST_PAGE_LINK_PARSED.format(i)
-                            for i in range(num_pages, 0, -1))
-    logger.info(f"Generated {num_pages} dummy page links")
-    # Allows for tracking subsequent failuers in scraping proces, in order to
+    # separate_page_links = (Config.LinksSetup.OFFER_SCROLL_LIST_PAGE_LINK_PARSED.format(i)
+    #                         for i in range(num_pages, 0, -1))
+    # logger.info(f"Generated {num_pages} dummy page links")
+    # # Allows for tracking subsequent failuers in scraping proces, in order to
     # break from look if the whole scraping process does not get response for subsequenst amount
     # of retries
     num_of_pages_parsed = 0
     number_of_subsequent_fetch_link_failures = 0
     number_of_subsequent_0_links_passed_error = 0
-    for page_link in separate_page_links:
+    for page_link in links_to_scrape:
         num_of_pages_parsed += 1 
         logger.info("===============================")
         logger.info(f"Parsing page {num_of_pages_parsed} / {num_pages}")
@@ -82,11 +84,6 @@ def scrape_links():
                 logger.info("Cookie popup wasn't closed (It is possible that it has not shown)")
                 logger.info(f"Link: {page_link}") 
         page_html = driver.page_source
-
-
-        # print(page_html)
-        from time import sleep
-        # sleep(1000)
 
 
         driver.close()
@@ -138,5 +135,6 @@ def scrape_links():
 
 
 def link_exists(link:str, live_session:Session) -> bool:
-    exists = live_session.query(links_table.c.Link==link).count()
+    exists = live_session.query(links_table).filter(links_table.c.Link==link).count()
     return bool(exists)
+

@@ -12,6 +12,8 @@ expectad_args = {"-o":"Initializes scraping offers based on links available in D
                  "-h":"Displays help."}
 
 def main():
+
+
     if len(user_args) == 0:
         logger.info(f"No arguments were passed, [-h for help].")
 

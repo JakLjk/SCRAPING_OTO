@@ -10,6 +10,7 @@ class Config:
         MAX_TIME_WHEN_WAITING_FOR_ELEM_LOAD = 3
         MAX_ACCEPTED_SUBSEQUENT_FAILED_LINK_SCRAPE_FAILURES = 3
         MAX_ACCEPTED_SUBSEQUENT_FAILED_0_LINKS_FAILURES = 3
+        TECHNICAL_SCRIPT_WAIT_TIME = 1.5
         # Scraping existing links means, that links that were previosly scraped will be inserted into db again,
         # along the new links. This apporach means, that if an offer under this specific link was scraped in past,
         # it will be scraped again (Which might be important to track changes in time)
@@ -25,8 +26,34 @@ class Config:
         TECHNICAL_TIME_SLEEP_DRIVER_SCRIPT_EXEC = 0.25
 
     class LinksSetup:
-        FIRST_OFFER_PAGE_SCROLL_LINK = "https://www.otomoto.pl/osobowe/katowice"
-        OFFER_SCROLL_LIST_PAGE_LINK_PARSED = "https://www.otomoto.pl/osobowe/katowice?page={}"
-    
+        MAIN_PAGE_LINK = "https://www.otomoto.pl"
+        TEMPLATE_LINK = "https://www.otomoto.pl/osobowe/{}"
+        TEMPLATE_LINK_VOIVODESHIP = "/{}"
+        TEMPLATE_LINK_PAGE_NUM = "&page={}"
+
+        VOIVODESHIPS = ["slaskie",
+                        "dolnoslaskie",
+                        "kujawsko-pomorskie",
+                        "lubelskie",
+                        "lodzkie",
+                        "malopolskie",
+                        "mazowieckie",
+                        "opolskie",
+                        "podkarpackie",
+                        "podlaskie",
+                        "pomorskie",
+                        "swietokrzyskie",
+                        "warminsko-mazurskie",
+                        "wielkopolskie",
+                        "zachodniopomorskie"]
+        
+        UNWANTED_MANUFACTURER_NAMES = ["Wybierz",
+                                       "Popularne"]
+        REPLACE_MANUFACTURER_NAMES = {"Warszawa":"marka_warszawa"}
+        
+        MAX_NUM_OFFERS_ON_MANU_WITHOUT_SPLIT = 1500
+        MAX_LAST_PAGE_NUM = 500
+
+
     class LoggingSetup:
         LOG_FILE_PATH_NAME=None
