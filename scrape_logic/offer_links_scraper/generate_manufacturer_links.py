@@ -39,6 +39,14 @@ def generate_separate_manufacturer_links():
     replace_manufacturer_names = Config.LinksSetup.REPLACE_MANUFACTURER_NAMES
     replace_manufacturer_names_keys = replace_manufacturer_names.keys()
 
+    # Selects only the voivodeships that are to be included in scraping process,
+    # Based on bool value provided in config
+    accepted_voivodeships = [voi_name for voi_name,
+                            accepted in voivodeship_names.items()
+                            if accepted]
+    accepted_voivodeships_log_string = ', '.join(accepted_voivodeships)
+    logger.info("Generating separate manufacturer links")
+    logger.info(f"Voivodeships taken into account: {accepted_voivodeships_log_string}")
     logger.info("Initializing webdriver")
     driver = pick_selenium_driver(browser_type=browser_type, 
                                   headless=run_headless)
@@ -84,20 +92,14 @@ def generate_separate_manufacturer_links():
             if num_offers != 0:
                 # If number of offers on specific manufacturer is higher that value specified
                 # in config, there's need to separate manufacturer into voicodeships
-                # Since otomoto allows to scroll back max to 500 page
-                if num_offers < max_num_offers_to_skip_voivdeship_split:
-                    template_link_filled = template_link.format(name)
-                    template_link_with_page_num = \
-                        template_link_filled
-                    all_links.append(template_link_with_page_num)
-                else:
-                    template_link_with_voivodeship = \
-                        template_link+template_link_voivodeship
-                    template_links_with_voivodeships = \
-                        [template_link_with_voivodeship
-                        .format(name, voivodeship)
-                        for voivodeship in voivodeship_names]
-                    all_links.extend(template_links_with_voivodeships)
+                # Since otomoto allows to scroll back max to 500 page   
+                template_link_with_voivodeship = \
+                    template_link+template_link_voivodeship
+                template_links_with_voivodeships = \
+                    [template_link_with_voivodeship
+                    .format(name, voivodeship)
+                    for voivodeship in accepted_voivodeships]
+                all_links.extend(template_links_with_voivodeships)
     logger.info(f"Returning unique manufacturer links")
     return all_links
 

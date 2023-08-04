@@ -31,21 +31,23 @@ class Config:
         TEMPLATE_LINK_VOIVODESHIP = "/{}"
         TEMPLATE_LINK_PAGE_NUM = "&page={}"
 
-        VOIVODESHIPS = ["slaskie",
-                        "dolnoslaskie",
-                        "kujawsko-pomorskie",
-                        "lubelskie",
-                        "lodzkie",
-                        "malopolskie",
-                        "mazowieckie",
-                        "opolskie",
-                        "podkarpackie",
-                        "podlaskie",
-                        "pomorskie",
-                        "swietokrzyskie",
-                        "warminsko-mazurskie",
-                        "wielkopolskie",
-                        "zachodniopomorskie"]
+        # Bool provided as value in dict means that links for 
+        # specified voivodeship are to be scraped
+        VOIVODESHIPS = {"slaskie":True,
+                        "dolnoslaskie":False,
+                        "kujawsko-pomorskie":False,
+                        "lubelskie":False,
+                        "lodzkie":False,
+                        "malopolskie":False,
+                        "mazowieckie":False,
+                        "opolskie":False,
+                        "podkarpackie":False,
+                        "podlaskie":False,
+                        "pomorskie":False,
+                        "swietokrzyskie":False,
+                        "warminsko-mazurskie":False,
+                        "wielkopolskie":False,
+                        "zachodniopomorskie":False}
         
         UNWANTED_MANUFACTURER_NAMES = ["Wybierz",
                                        "Popularne"]
