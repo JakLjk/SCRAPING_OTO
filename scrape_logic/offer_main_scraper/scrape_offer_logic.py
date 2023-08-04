@@ -67,7 +67,7 @@ def scrape_offer():
             # Insert data into offer raw table
             curr_date = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
             statement = (insert(raw_offer_data_table)
-                        .values(DATE=curr_date,
+                        .values(Scrape_DateTime=curr_date,
                             Raw_Data=page_html,
                             Used_Link=link))
             session.execute(statement)
@@ -147,5 +147,5 @@ def init_driver_scrape_process(link):
     logger.info(f"Closing driver session.")
     page_html = driver.page_source
     driver.quit()
-
+    logger.info("Driver session closed")
     return page_html

@@ -49,11 +49,13 @@ class Config:
         
         UNWANTED_MANUFACTURER_NAMES = ["Wybierz",
                                        "Popularne"]
-        REPLACE_MANUFACTURER_NAMES = {"Warszawa":"marka_warszawa"}
+        REPLACE_MANUFACTURER_NAMES = {"Warszawa":"marka_warszawa",
+                                      "BMW-ALPINA":"alpina",
+                                      "Zastava":"zastawa"}
         
-        MAX_NUM_OFFERS_ON_MANU_WITHOUT_SPLIT = 1500
+        MAX_NUM_OFFERS_ON_MANU_WITHOUT_SPLIT = 15000
         MAX_LAST_PAGE_NUM = 500
-
+        NUM_OFFERS_PER_PAGE = 32
 
     class LoggingSetup:
         LOG_FILE_PATH_NAME=None

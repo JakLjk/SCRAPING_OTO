@@ -18,8 +18,13 @@ def get_num_pages(link: str):
     
     driver.get(url=link)
     try:
-        last_page_num =  driver.find_element(By.XPATH,
-        "/html/body/div[1]/div/div/div/div[2]/div[2]/div[2]/div[1]/div[3]/div[3]/div/ul/li[6]/a/span").text
+        # last_page_num =  driver.find_element(By.XPATH,
+        # "/html/body/div[1]/div/div/div/div[2]/div[2]/div[2]/div[1]/div[3]/div[3]/div/ul/li[6]/a/span").text
+        last_page_num = driver.find_elements(By.CSS_SELECTOR, ".ooa-xdlax9.e1f09v7o0")
+        if len(last_page_num) != 0:
+            last_page_num = last_page_num[-1].text
+        else:
+            return None
     except NoSuchElementException as nsee:
         logger.info("Could not locate element with last page. Either there is no such element, or page layout has changed.")
         logger.info(f"Link: {link}")

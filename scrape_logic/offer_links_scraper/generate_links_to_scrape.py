@@ -29,7 +29,7 @@ def generate_links_to_scrape():
             all_links.append(link)
         else:
             link_with_page_id = link + link_part_with_page_id
-            separate_page_links = (link_with_page_id.format(i)
-                        for i in range(num_pages, 0, -1))
+            separate_page_links = [link_with_page_id.format(i)
+                        for i in range(num_pages, 0, -1)]
             all_links.append(separate_page_links)
     return all_links

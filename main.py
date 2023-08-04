@@ -1,3 +1,6 @@
+#!/usr/local/bin/Scripts/GIT\ Repositories/SCRAPING_OTO/env/bin/python
+
+
 import os, sys
 
 from scrape_logic import scrape_links, scrape_offer
@@ -21,6 +24,10 @@ def main():
         arg_string ="\n" +"\n".join([f"{key}: {val}" for key, val in expectad_args.items()])
         print(f"""Arguments that can be utilized in this script: {arg_string}""")
 
+
+    # Accept l or o
+    # l - pass voivodeship or all (or if empty argument, then all voivodeships)
+    # l - pass car producer (if empty, all car producers)
     if "-l" in user_args:
         scrape_links()
 
