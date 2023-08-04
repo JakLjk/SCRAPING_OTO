@@ -6,7 +6,7 @@ from sqlalchemy import MetaData
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
 
-from .dbschema import metadata_obj, links_table, raw_offer_data_table
+from .dbschema import metadata_obj, links_table, raw_offer_data_table, offers_parsed
 
  
 # loading db credentials

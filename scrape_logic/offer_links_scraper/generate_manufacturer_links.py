@@ -1,6 +1,7 @@
 
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
@@ -13,6 +14,7 @@ from logger import logger
 from config import Config
 
 from response_methods import pick_selenium_driver
+from response_methods import selenium_get_retry
 
 def generate_separate_manufacturer_links():
     """Generates list of links that are separated based on manufacturer name,
@@ -52,8 +54,16 @@ def generate_separate_manufacturer_links():
                                   headless=run_headless)
     
     logger.info(f"Loading url: {main_page_link}")
-    driver.get(url=main_page_link)
-    
+    try:
+        selenium_get_retry(driver=driver,
+                        link=main_page_link,
+                        num_retries=3,
+                        retry_intervals_seconds=1)
+    except WebDriverException as wde:
+        logger.info("WebDriverException was raised whilst trying to load webpage")
+        driver.quit()
+        return None
+             
     # Try to close cookie button, if such is to appear
     logger.info(f"Trying to close cookies popup...")
     try:    

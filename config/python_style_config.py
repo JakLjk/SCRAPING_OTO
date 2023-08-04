@@ -25,6 +25,9 @@ class Config:
         INTERVAL_BETWEEN_RETRIES = 3
         TECHNICAL_TIME_SLEEP_DRIVER_SCRIPT_EXEC = 0.25
 
+        # TODO implementation - now implicitly set as False
+        SCRAPE_OFFER_HTML_IF_ALREADY_WAS_SCRAPED=False
+
     class LinksSetup:
         MAIN_PAGE_LINK = "https://www.otomoto.pl"
         TEMPLATE_LINK = "https://www.otomoto.pl/osobowe/{}"
@@ -60,4 +63,9 @@ class Config:
         NUM_OFFERS_PER_PAGE = 32
 
     class LoggingSetup:
-        LOG_FILE_PATH_NAME=None
+        RELATIVE_LOG_FILE_PATH_NAME='/logs/main_log'
+        MAX_MB_SIZE_OF_CONFIG = 100
+        LOG_BACKUP_FILES = 2
+
+    class ETL:
+        WAIT_IF_NO_OFFERS_TO_PARSE = 30

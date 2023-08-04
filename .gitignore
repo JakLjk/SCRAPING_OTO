@@ -1,6 +1,8 @@
 # user defined
 todo.txt
 sqlalchemy_t.py
+test.py
+logs
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

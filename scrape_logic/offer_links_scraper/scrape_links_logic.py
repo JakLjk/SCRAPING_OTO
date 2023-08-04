@@ -94,7 +94,10 @@ def get_page_raw_source(current_page_link:str):
         selenium_get_retry(driver=driver, link=current_page_link, 
                                         num_retries=num_of_retries, 
                                         retry_intervals_seconds=interval_between_retries)
-    except WebDriverException as wde: return None
+    except WebDriverException as wde: 
+        logger.info("WebDriverException was raised whilst trying to load webpage")
+        driver.quit()
+        return None
     logger.info(f"Waiting for 'Accept Cookies' popup to appear...")
     # Try to close cookie button, if such is to appear
     try:    
@@ -105,7 +108,7 @@ def get_page_raw_source(current_page_link:str):
     except TimeoutException:
             logger.info("Cookie popup wasn't closed (It is possible that it has not shown)")
     page_html = driver.page_source
-    driver.close()
+    driver.quit()
     return page_html
 
 

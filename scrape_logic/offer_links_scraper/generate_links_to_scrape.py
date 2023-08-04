@@ -13,7 +13,7 @@ from config import Config
 
 from response_methods import pick_selenium_driver
 
-from .get_year_manufacturer_name_separated_links import get_year_manufacturer_separated_links
+from .generate_manufacturer_links import get_year_manufacturer_separated_links
 from .get_num_pages import get_num_pages
 
 

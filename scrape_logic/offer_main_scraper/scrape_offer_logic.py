@@ -44,6 +44,8 @@ def scrape_offer():
             logger.info(f"Scraping iteration number {num_of_pages_parsed}. There are {rows_left} links to be scraped left.")
             logger.info(f"Fetching link to scrape from db...")
 
+            # get link which was not scraped earlier, is not already scraped
+            # And omit links that are locked in db (by another concurrent program running)
             link_row = (session.query(links_table)
                             .filter(links_table.c.Scrape_Status=="Not_Scraped")
                             .filter(~ exists().where(links_table.c.Link==raw_offer_data_table.c.Used_Link))
