@@ -24,6 +24,7 @@ def get_num_pages(link: str):
         if len(last_page_num) != 0:
             last_page_num = last_page_num[-1].text
         else:
+            driver.quit()
             return None
     except NoSuchElementException as nsee:
         logger.info("Could not locate element with last page. Either there is no such element, or page layout has changed.")

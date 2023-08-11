@@ -17,21 +17,27 @@ from selenium.common.exceptions import TimeoutException, WebDriverException, Ele
 from time import sleep, time, strftime, gmtime
 from datetime import datetime
 
+import bs4
 
 def scrape_offer():
     # Wait time for new link to scrape, if there are no links to scrape available
     wait_for_link_to_scrape = Config.OffersScrapingSetup.WAIT_TIME_FOR_NEW_LINKS_TO_SCRAPE
+    wait_time_after_improper_page_load = Config.OffersScrapingSetup.WAIT_TIME_AFTER_IMPROPER_PAGE_LOAD
+    max_concurrent_repeats = Config.OffersScrapingSetup.NUM_OF_MAX_SCRAPE_RETRIES
+
 
     logger.info("Initializing offer data scraping process.")
     # Setting up variables which will give information about amount of
     # time the function was running and number of pages that were being worked on.
     num_of_pages_parsed = 0
     main_scrape_begin_time = time()
+    concurrent_load_title_errors = 0
 
     while True:
         logger.info('=================================================')
         current_iteration_begin_time = time()
         num_of_pages_parsed += 1
+
 
         with Session(engine) as session:
             # Link returns first row, which is not yet present in scraped data, and locks it for time of transaction
@@ -60,7 +66,23 @@ def scrape_offer():
             link = link_row.Link
             logger.info(f"Link selected: {link}")
 
-            page_html = init_driver_scrape_process(link)
+            page_html = None
+
+            try:
+                page_html = init_driver_scrape_process(link)
+            except AttributeError:
+                if concurrent_load_title_errors >= max_concurrent_repeats:
+                    logger.info(f"Max retries amount exceeded, removing link from db")
+                    remove_link_from_db(link, session)
+                    logger.info(f"Link removed from db. {link}")
+                else:
+                    logger.info(f"Attribute error has appeared, resuming scraping process in {wait_time_after_improper_page_load} seconds")
+                    concurrent_load_title_errors += 1
+                    sleep(wait_time_after_improper_page_load)
+                    continue
+
+            concurrent_load_title_errors = 0
+
             if page_html is None:
                   logger.error("Received empty from scrape function, skipping...")
                   continue
@@ -88,6 +110,10 @@ def scrape_offer():
             logger.info(f"Current iteration took {this_iter_time}. Whole process is taking: {whole_process_time}.")
             logger.info(f"If this is the only process used, the ETA is approx. {eta_time_left}")
 
+
+def remove_link_from_db(link:str, session):
+    session.query(links_table).filter(links_table.c.Link==link).delete()
+    session.commit()
 
 def init_driver_scrape_process(link):
     """Returns None in case of error"""
@@ -125,7 +151,7 @@ def init_driver_scrape_process(link):
     # Scroll down in order to load dynamic JS and widgets, such as google map
     logger.info(f"Scrolling down through webpage to load additional widgets...")
     sleep(technical_sleep_time_between_driver_script_exec)
-    driver.execute_script("window.scrollTo(0,2800)")
+    driver.execute_script("window.scrollTo(0,3600)")
     sleep(technical_sleep_time_between_driver_script_exec)
 
     logger.info(f"Trying to expand additional offer information container.")
@@ -150,4 +176,14 @@ def init_driver_scrape_process(link):
     page_html = driver.page_source
     driver.quit()
     logger.info("Driver session closed")
+
+    logger.info("asserting data structure by checking if specific html elements were loaded...")
+    soup = bs4.BeautifulSoup(page_html, 'html.parser')
+    try:
+        offer_title = soup.find('h1', {'class':'offer-title big-text'}).get_text().strip()
+    except AttributeError:
+         logger.error(f"Could not find offer data, most probably site was not loaded completely. {link}")
+         raise AttributeError("No offer title available")
+
+
     return page_html

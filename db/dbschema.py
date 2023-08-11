@@ -25,4 +25,10 @@ offers_parsed = Table(
     metadata_obj,
     Column("ID_O_P",Integer, autoincrement=True, primary_key=True),
     Column("Parsing_DateTime",DATETIME),
-    Column("Link", Text))
+    Column("Link", Text),
+    Column("Offer_Title", Text),
+    Column("Offer_Price", Text),
+    Column("Offer_Price_Currency", Text),
+    Column("Offer_Details",Text),
+    Column("Equipment_Details", Text),
+    Column("Coordinates",Text))

@@ -20,10 +20,11 @@ class Config:
         # How frequently should script ping db to check if there are any 
         # links available
         WAIT_TIME_FOR_NEW_LINKS_TO_SCRAPE = 60
-        NUM_OF_MAX_SCRAPE_RETRIES = 3
+        NUM_OF_MAX_SCRAPE_RETRIES = 2
         MAX_TIME_WHEN_WAITING_FOR_ELEM_LOAD = 3
         INTERVAL_BETWEEN_RETRIES = 3
-        TECHNICAL_TIME_SLEEP_DRIVER_SCRIPT_EXEC = 0.25
+        TECHNICAL_TIME_SLEEP_DRIVER_SCRIPT_EXEC = 0.40
+        WAIT_TIME_AFTER_IMPROPER_PAGE_LOAD = 3
 
         # TODO implementation - now implicitly set as False
         SCRAPE_OFFER_HTML_IF_ALREADY_WAS_SCRAPED=False
@@ -32,7 +33,7 @@ class Config:
         MAIN_PAGE_LINK = "https://www.otomoto.pl"
         TEMPLATE_LINK = "https://www.otomoto.pl/osobowe/{}"
         TEMPLATE_LINK_VOIVODESHIP = "/{}"
-        TEMPLATE_LINK_PAGE_NUM = "&page={}"
+        TEMPLATE_LINK_PAGE_NUM = "?page={}"
 
         # Bool provided as value in dict means that links for 
         # specified voivodeship are to be scraped
@@ -69,3 +70,4 @@ class Config:
 
     class ETL:
         WAIT_IF_NO_OFFERS_TO_PARSE = 30
+        PROCESS_LINKS_PREVIOUSLY_PARSED = False
