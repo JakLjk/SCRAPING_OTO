@@ -9,7 +9,8 @@ links_table = Table(
     Column("ID_L", Integer, autoincrement=True, primary_key=True),
     Column("Scrape_DateTime", DATETIME),
     Column("Link", Text),
-    Column("Scrape_Status", Text))
+    Column("Scrape_Status", Text),
+    Column("Link_Health_Status", Text))
 
 raw_offer_data_table = Table(
     "raw_offer_data",
@@ -28,7 +29,6 @@ offers_parsed = Table(
     Column("Link", Text),
     Column("Offer_Title", Text),
     Column("Offer_Price", Text),
-    Column("Offer_Price_Currency", Text),
     Column("Offer_Details",Text),
     Column("Equipment_Details", Text),
     Column("Coordinates",Text))

@@ -7,6 +7,7 @@ from response_methods import pick_selenium_driver
 
 from db import engine, links_table, raw_offer_data_table
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import or_
 from sqlalchemy import select, exists, insert
 
 from selenium.webdriver.support.ui import WebDriverWait
@@ -54,6 +55,8 @@ def scrape_offer():
             # And omit links that are locked in db (by another concurrent program running)
             link_row = (session.query(links_table)
                             .filter(links_table.c.Scrape_Status=="Not_Scraped")
+                            .filter(or_(~links_table.c.Link_Health_Status==None,
+                                        ~links_table.c.Link_Health_Status=="Broken"))
                             .filter(~ exists().where(links_table.c.Link==raw_offer_data_table.c.Used_Link))
                             .with_for_update(skip_locked=True)
                             .first())
@@ -73,7 +76,7 @@ def scrape_offer():
             except AttributeError:
                 if concurrent_load_title_errors >= max_concurrent_repeats:
                     logger.info(f"Max retries amount exceeded, removing link from db")
-                    remove_link_from_db(link, session)
+                    set_link_status_as_broken(link, session)
                     logger.info(f"Link removed from db. {link}")
                 else:
                     logger.info(f"Attribute error has appeared, resuming scraping process in {wait_time_after_improper_page_load} seconds")
@@ -111,8 +114,9 @@ def scrape_offer():
             logger.info(f"If this is the only process used, the ETA is approx. {eta_time_left}")
 
 
-def remove_link_from_db(link:str, session):
-    session.query(links_table).filter(links_table.c.Link==link).delete()
+def set_link_status_as_broken(link:str, session):
+    session.query(links_table).filter(links_table.c.Link==link).update(dict(Link_Health_Status="Broken"))
+    # session.query(links_table).filter(links_table.c.Link==link).delete()
     session.commit()
 
 def init_driver_scrape_process(link):
