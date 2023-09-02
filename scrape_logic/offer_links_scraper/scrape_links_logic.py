@@ -55,7 +55,10 @@ def scrape_links():
         if scrape_links_for_link_specified(link=dummy_link_first_pages):
             logger.info(f"Scrape for {dummy_link_first_pages} has finished successfully.")
         else:
-            logger.info(f"Scrape for {dummy_link_first_pages} has encountered a problem.")
+            logger.info(f"Scrape for {dummy_link_first_pages} has encountered a problem - No links were scrapped.")
+            subsequent_failures += 1
+            logger.info(f"Subsequent Failures before timeout {subsequent_failures}/{max_accepted_subsequent_failed_link_scrape_failures}")
+            assert_subsequent_failures(subsequent_failures)
         # In case of situation, where there is more than one page provided for manufacturer,
         # generate link for each page and scrape links on each of them
         if number_of_pages_to_parse is not None:
@@ -69,8 +72,9 @@ def scrape_links():
                     logger.info(f"Scrape for {current_page_link} has finished successfully.")
                     subsequent_failures = 0
                 else:
-                    logger.info(f"Scrape for {current_page_link} has encountered a problem.")
+                    logger.info(f"Scrape for {current_page_link} has encountered a problem - No links were scrapped.")
                     subsequent_failures += 1
+                    logger.info(f"Subsequent Failures before timeout {subsequent_failures}/{max_accepted_subsequent_failed_link_scrape_failures}")
                     assert_subsequent_failures(subsequent_failures)
 
 
@@ -82,7 +86,8 @@ def scrape_links_for_link_specified(link):
         logger.info(f"Parsing page html into links... ")
         page_links = get_offer_links_from_curr_page(page_html)
         # TODO add timeout mechanism as in page html scraping
-        if page_links is None: return False
+        if page_links == [] or page_links is None:
+            return False
         logger.info(f"Passing liks to db...")
         commit_links_to_db(page_links)
         return True
@@ -112,13 +117,14 @@ def get_page_raw_source(current_page_link:str):
     return page_html
 
 
+
 def get_offer_links_from_curr_page(page_html):
     soup = bs4.BeautifulSoup(page_html, 'html.parser')
     try:
         elements_no_promo = soup.find('main',  
             {"class":"ooa-1hab6wx er8sc6m9"})
-        all_link_elems = elements_no_promo.find_all("h2",
-            {"class":"evg565y7 evg565y23 ooa-10p8u4x er34gjf0"})
+        all_link_elems = elements_no_promo.find_all("h1",
+            {"ev7e6t89 ooa-1xvnx1e er34gjf0"})
     except AttributeError as ae:
         logger.error(ae)
         # logger.error(f"Unable to properly scrape page: {page_link}.")

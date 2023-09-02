@@ -4,6 +4,7 @@ import os, sys
 from scrape_logic import scrape_links, scrape_offer
 from raw_page_intepreter import get_structurized_data
 from populate_helper_tables import populate_helper_table
+from server_side_management import start_server
 
 from logger import logger
 
@@ -31,6 +32,9 @@ def main():
 
     # TODO Accept l or o
     # TODO l [optional argument with voivodeships to parse]
+    if "-s" in user_args:
+        start_server()
+
     if "-l" in user_args:
         scrape_links()
 
