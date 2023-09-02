@@ -9,3 +9,9 @@ def post_link(link):
     data = request.json()
     status = data['Status']
     return status
+
+def change_link_status(link, new_status):
+    request = requests.post(ServConfig.full_webhook_path, json={
+        "Operation":OperationTypes.update_link_status,
+        "Link":str(link),
+        "linkStatus":new_status})

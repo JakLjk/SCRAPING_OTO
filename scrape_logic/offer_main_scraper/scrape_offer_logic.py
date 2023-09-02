@@ -20,6 +20,10 @@ from datetime import datetime
 
 import bs4
 
+from client_access_methods.get_link import get_link, change_link_status, change_link_health_status
+from client_access_methods.post_raw_page_data import post_raw_data
+from config import OperationTypes, DBTableConfig
+
 def scrape_offer():
     # Wait time for new link to scrape, if there are no links to scrape available
     wait_for_link_to_scrape = Config.OffersScrapingSetup.WAIT_TIME_FOR_NEW_LINKS_TO_SCRAPE
@@ -39,85 +43,49 @@ def scrape_offer():
         current_iteration_begin_time = time()
         num_of_pages_parsed += 1
 
+        logger.info(f"Fetching link to scrape from db...")
 
-        with Session(engine) as session:
-            # Link returns first row, which is not yet present in scraped data, and locks it for time of transaction
-            # In order to prevent other scrapers scraping this function (to save resources)
-            rows_left = (session.query(links_table)
-                    .filter(links_table.c.Scrape_Status=="Not_Scraped")
-                    .distinct(links_table.c.Link)
-                    .count())
-            
-            logger.info(f"Scraping iteration number {num_of_pages_parsed}. There are {rows_left} links to be scraped left.")
-            logger.info(f"Fetching link to scrape from db...")
+        # get link which was not scraped earlier, is not already scraped
+        link_data = get_link()
+        status = link_data["Status"]
+        link = link_data["Link"]
+        if not status == OperationTypes.status_success:
+                logger.info(f"There was an issue with fetching link from db. Retrying in {wait_for_link_to_scrape} seconds.")
+                sleep(wait_for_link_to_scrape)
+                continue
+        
+        logger.info(f"Link selected: {link}")
 
-            # get link which was not scraped earlier, is not already scraped
-            # And omit links that are locked in db (by another concurrent program running)
-            link_row = (session.query(links_table)
-                            .filter(links_table.c.Scrape_Status=="Not_Scraped")
-                            .filter(or_(~links_table.c.Link_Health_Status==None,
-                                        ~links_table.c.Link_Health_Status=="Broken"))
-                            .filter(~ exists().where(links_table.c.Link==raw_offer_data_table.c.Used_Link))
-                            .with_for_update(skip_locked=True)
-                            .first())
-            
-            if link_row == None:
-                  logger.info(f"There are no links to scrape currently, checking again in {wait_for_link_to_scrape} seconds.")
-                  sleep(wait_for_link_to_scrape)
-                  continue
-                
-            link = link_row.Link
-            logger.info(f"Link selected: {link}")
+        page_html = None
 
-            page_html = None
+        try:
+            page_html = init_driver_scrape_process(link)
+        except AttributeError:
+            if concurrent_load_title_errors >= max_concurrent_repeats:
+                logger.info(f"Max retries amount exceeded, marking link as broken")
+                change_link_health_status(link, OperationTypes.link_health_status_broken)
+                logger.info(f"Link marked as broken: {link}")
+            else:
+                logger.info(f"Attribute error has appeared, resuming scraping process in {wait_time_after_improper_page_load} seconds")
+                concurrent_load_title_errors += 1
+                sleep(wait_time_after_improper_page_load)
+                continue
 
-            try:
-                page_html = init_driver_scrape_process(link)
-            except AttributeError:
-                if concurrent_load_title_errors >= max_concurrent_repeats:
-                    logger.info(f"Max retries amount exceeded, removing link from db")
-                    set_link_status_as_broken(link, session)
-                    logger.info(f"Link removed from db. {link}")
-                else:
-                    logger.info(f"Attribute error has appeared, resuming scraping process in {wait_time_after_improper_page_load} seconds")
-                    concurrent_load_title_errors += 1
-                    sleep(wait_time_after_improper_page_load)
-                    continue
+        concurrent_load_title_errors = 0
 
-            concurrent_load_title_errors = 0
+        if page_html is None:
+                logger.error("Received empty from scrape function, skipping...")
+                continue
 
-            if page_html is None:
-                  logger.error("Received empty from scrape function, skipping...")
-                  continue
+        logger.info(f"Inserting offer raw data into db.")
+        post_raw_data(raw_data=page_html,
+                        used_link=link)
 
-            logger.info(f"Inserting offer raw data into db.")
-            # Insert data into offer raw table
-            curr_date = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
-            statement = (insert(raw_offer_data_table)
-                        .values(Scrape_DateTime=curr_date,
-                            Raw_Data=page_html,
-                            Used_Link=link))
-            session.execute(statement)
-
-            logger.info(f"Updating 'Scrape_Staus' in links table to 'Was_Scraped'")
-            # Update links column Scrape_Status to Was_Scraped 
-            num_rows_updated = (session.query(links_table)
-                                .filter_by(Link=link)
-                                .update(dict(Scrape_Status='Was_Scraped')))
-            logger.info(f"Commiting changes to database...")
-            session.commit()
-            logger.info(f"Changes commited successfully.")
-            this_iter_time = strftime('%M:%S', gmtime(time() - current_iteration_begin_time))
-            whole_process_time = strftime('%H:%M:%S', gmtime(time() - main_scrape_begin_time))
-            eta_time_left = strftime('%H:%M:%S', gmtime(current_iteration_begin_time*rows_left))
-            logger.info(f"Current iteration took {this_iter_time}. Whole process is taking: {whole_process_time}.")
-            logger.info(f"If this is the only process used, the ETA is approx. {eta_time_left}")
-
-
-def set_link_status_as_broken(link:str, session):
-    session.query(links_table).filter(links_table.c.Link==link).update(dict(Link_Health_Status="Broken"))
-    # session.query(links_table).filter(links_table.c.Link==link).delete()
-    session.commit()
+        logger.info(f"Updating 'Scrape_Staus' in links table to {DBTableConfig.links_table_scrape_status_scraped}")
+        change_link_status(link, DBTableConfig.links_table_scrape_status_scraped )
+        this_iter_time = strftime('%M:%S', gmtime(time() - current_iteration_begin_time))
+        whole_process_time = strftime('%H:%M:%S', gmtime(time() - main_scrape_begin_time))
+        logger.info(f"Current iteration took {this_iter_time}. Whole process is taking: {whole_process_time}.")
 
 def init_driver_scrape_process(link):
     """Returns None in case of error"""

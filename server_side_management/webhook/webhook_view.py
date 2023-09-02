@@ -3,7 +3,8 @@ import json
 
 from config import OperationTypes, ServConfig
 from ..db_management_scripts.insert_link_into_db import add_link_to_db
-from ..db_management_scripts.get_link_from_db import get_link_from_db
+from ..db_management_scripts.get_link_from_db import get_link_from_db, update_scrape_status, update_health_status
+from ..db_management_scripts.insert_raw_data_into_db import add_raw_data_to_db
 from logger import logger
 
 webhook = Blueprint('webhook', __name__)
@@ -35,6 +36,28 @@ def data_hook():
                 logger.error(str(ve))
                 return jsonify({"Status":OperationTypes.status_failed,
                                 "Link":None})
+            
+        elif OperationTypes.update_link_status == data["Operation"]:
+            link = data["Link"]
+            link_status = data["linkStatus"]
+            update_scrape_status(link, link_status)
+            return jsonify({"Status": OperationTypes.status_success,
+                                "Link":link})
+    
+        elif OperationTypes.update_link_health_status == data["Operation"]:
+            link = data["Link"]
+            link_health_status = data["linkHealthStatus"] 
+            update_health_status(link, link_health_status)
+            return jsonify({"Status": OperationTypes.status_success,
+                                "Link":link})
+        
+        elif OperationTypes.raw_data_to_db == data["Operation"]:
+            raw_data = data["rawData"]
+            used_link = data["usedLink"] 
+            add_raw_data_to_db(raw_data, used_link)
+            return jsonify({"Status": OperationTypes.status_success})
+
+
         
             
 

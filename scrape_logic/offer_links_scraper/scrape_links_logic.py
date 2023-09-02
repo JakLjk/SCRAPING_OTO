@@ -22,6 +22,9 @@ from db import engine, links_table
 from .get_num_pages import get_num_pages
 from .generate_manufacturer_links import generate_separate_manufacturer_links
 
+from client_access_methods.post_link import post_link
+from config import OperationTypes
+
 
 driver_type = Config.SeleniumDriverSetup.DRIVER_TYPE
 run_headless = Config.SeleniumDriverSetup.DRIVER_HEADLESS
@@ -117,7 +120,6 @@ def get_page_raw_source(current_page_link:str):
     return page_html
 
 
-
 def get_offer_links_from_curr_page(page_html):
     soup = bs4.BeautifulSoup(page_html, 'html.parser')
     try:
@@ -135,30 +137,36 @@ def get_offer_links_from_curr_page(page_html):
 
 
 def commit_links_to_db(all_links):
-    with Session(engine) as session: 
-    # Check if link already in db, to see if there's need to pass it again
-        if not scrape_existing:
-            all_links = [link for link in all_links if not link_exists(link, session)]
-        #Put all links into database
-        curr_date = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
-        statement = insert(links_table)
-        link_rows_to_pass_to_db = [{"Scrape_DateTime":curr_date,
-                                    "Link":link, 
-                                    "Scrape_Status":"Not_Scraped"} 
-                                    for link in all_links]
-        logger.info(f"Passing {len(link_rows_to_pass_to_db)} links to database.")
-        session.execute(statement,link_rows_to_pass_to_db)
-        session.commit()
-        rows_left = (session.query(links_table)
-            .filter(links_table.c.Scrape_Status=="Not_Scraped")
-            .distinct(links_table.c.Link)
-            .count())
-        logger.info(f"There are currently {rows_left} links to be scraped in database.")
+    # with Session(engine) as session: 
+    # # Check if link already in db, to see if there's need to pass it again
+    #     if not scrape_existing:
+    #         all_links = [link for link in all_links if not link_exists(link, session)]
+    #     #Put all links into database
+    #     curr_date = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+    #     statement = insert(links_table)
+    #     link_rows_to_pass_to_db = [{"Scrape_DateTime":curr_date,
+    #                                 "Link":link, 
+    #                                 "Scrape_Status":"Not_Scraped"} 
+    #                                 for link in all_links]
+    #     logger.info(f"Passing {len(link_rows_to_pass_to_db)} links to database.")
+    #     session.execute(statement,link_rows_to_pass_to_db)
+    #     session.commit()
+    #     rows_left = (session.query(links_table)
+    #         .filter(links_table.c.Scrape_Status=="Not_Scraped")
+    #         .distinct(links_table.c.Link)
+    #         .count())
+    #     logger.info(f"There are currently {rows_left} links to be scraped in database.")
+    success_rate = 0
+    for link in all_links:
+        status = post_link(link)
+        if status == OperationTypes.status_success:
+            success_rate += 1
+    logger.info(f"{success_rate}/{len(all_links)} links were passed into db")
 
 
-def link_exists(link:str, live_session:Session) -> bool:
-    exists = live_session.query(links_table).filter(links_table.c.Link==link).count()
-    return bool(exists)
+# def link_exists(link:str, live_session:Session) -> bool:
+#     exists = live_session.query(links_table).filter(links_table.c.Link==link).count()
+#     return bool(exists)
 
 
 def assert_subsequent_failures(subsequent_failures):
