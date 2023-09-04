@@ -14,6 +14,9 @@ from config import Config
 from db import engine, raw_offer_data_table, offers_parsed
 from logger import logger
 
+from server_side_management.webhook import db
+
+
 parse_previously_parsed = Config.ETL.PROCESS_LINKS_PREVIOUSLY_PARSED
 
 def load_raw_offer_data():
@@ -31,7 +34,7 @@ def load_raw_offer_data():
         if raw_data_row is None:
                return None
         return {"link":raw_data_row.Used_Link, "raw_data":raw_data_row.Raw_Data}
-            
+        
 
 def write_offer_data_to_db(link:str,
                            offer_title:str,
