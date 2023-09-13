@@ -23,18 +23,13 @@ def get_structurized_data():
             continue
 
         link = raw_data["Link"]
+        webpage_style = raw_data["webpageStyle"]
         raw_data = raw_data["rawData"]
 
         logger.info(f"Processing raw data for link {link}")
-        scraped_data = scrape_data_from_raw(link,raw_data)
+        scraped_data = scrape_data_from_raw(link,raw_data, webpage_style)
 
         logger.info(f"Inserting processed data into db")
-        # write_offer_data_to_db(link=link,
-        #                         offer_title=scraped_data["offer_title"],
-        #                         offer_price=scraped_data["price"],
-        #                         offer_details=scraped_data["offer_details"],
-        #                         offer_equipment_details=scraped_data["equipment"],
-        #                         offer_coordinates=scraped_data["coordinates"])
         try:
             push_offer_details_to_db(link=link,
                                     offer_title=scraped_data["offer_title"],

@@ -9,12 +9,14 @@ class Config:
         SLEEP_SECONDS_BETWEEN_RETIRES = 1
         MAX_TIME_WHEN_WAITING_FOR_ELEM_LOAD = 3
         MAX_ACCEPTED_SUBSEQUENT_FAILED_LINK_SCRAPE_FAILURES = 3
+        MAX_ACCEPTED_SUBSEQUENT_LINK_DB_FAILED_COLUMN_INTEGER = 4
         MAX_ACCEPTED_SUBSEQUENT_FAILED_0_LINKS_FAILURES = 3
         TECHNICAL_SCRIPT_WAIT_TIME = 1.5
         # Scraping existing links means, that links that were previosly scraped will be inserted into db again,
         # along the new links. This apporach means, that if an offer under this specific link was scraped in past,
         # it will be scraped again (Which might be important to track changes in time)
         SCRAPE_EXISTING_IN_DB = False
+
 
     class OffersScrapingSetup:
         # How frequently should script ping db to check if there are any 
@@ -37,10 +39,10 @@ class Config:
 
         # Bool provided as value in dict means that links for 
         # specified voivodeship are to be scraped
-        VOIVODESHIPS = {"slaskie":True,
-                        "dolnoslaskie":False,
-                        "kujawsko-pomorskie":False,
-                        "lubelskie":False,
+        VOIVODESHIPS = {"slaskie":False,
+                        "dolnoslaskie":True,
+                        "kujawsko-pomorskie":True,
+                        "lubelskie":True,
                         "lodzkie":False,
                         "malopolskie":False,
                         "mazowieckie":False,

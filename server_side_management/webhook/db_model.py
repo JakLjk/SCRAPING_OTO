@@ -9,8 +9,9 @@ class links(db.Model):
     Scrape_DateTime = db.Column(DateTime(timezone=False),default=func.now())
     Link = db.Column(Text)
     Scrape_Status = db.Column(Text)
-    Link_Health_Status = db.Column(Text,
+    Error_Message = db.Column(Text,
                                     default='')
+    Failed_Times = db.Column(Integer)
     
 class raw_offer_data(db.Model):
     ID_O = db.Column(Integer, primary_key=True)
@@ -18,6 +19,7 @@ class raw_offer_data(db.Model):
     Raw_Data = db.Column(LONGTEXT)
     Used_Link = db.Column(Text)
     ETL_Performed_Status = db.Column(Text)
+    Webpage_Layout_Version = db.Column(Text)
 
 class offer_details_parsed(db.Model):
     ID_O_P = db.Column(Integer, primary_key=True)

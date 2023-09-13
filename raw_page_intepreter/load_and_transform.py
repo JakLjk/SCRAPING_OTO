@@ -65,14 +65,21 @@ def set_link_scrape_status_to_true(link:str):
                 
 
 
-def scrape_data_from_raw(link:str, raw_data_html:str):
+def scrape_data_from_raw(link:str, raw_data_html:str, webpage_style:str):
     soup = bs4.BeautifulSoup(raw_data_html, 'html.parser')
+    if webpage_style == "NEW":
+        return scrape_new_layout(soup, link)
+    elif webpage_style == "OLD":
+        return scrape_legacy_layout(soup, link)
 
+
+def scrape_legacy_layout(soup:bs4.BeautifulSoup, link):
+    logger.info("Using old offer scrapper")
     full_offer_info = {}
     try:
             full_offer_info['offer_title'] = soup.find('h1', {'class':'offer-title big-text'}).get_text().strip()
     except AttributeError as ae:
-            logger.error(f"Unable to fetch offer title. LINK: {link}")
+            logger.error(f"OLD: Unable to fetch offer title. LINK: {link}")
             return AttributeError("No Title Information")
     full_offer_info['price'] = soup.find('span', {'class':'offer-price__number'}).get_text().strip()
     
@@ -84,8 +91,54 @@ def scrape_data_from_raw(link:str, raw_data_html:str):
         detail_name = detail_container.find('span', {'class':'offer-params__label'}).get_text().strip()
         detail_value = detail_container.find('div',{'class':'offer-params__value'}).get_text().strip()
         separate_details.append(f"{detail_name}:{detail_value}")
+        
+    full_offer_info["offer_details"] = "|".join(separate_details)
+    coords_1 = soup.find('div', {'class', 'gm-style'})
+    coords_1 = coords_1.find_all('a', attrs={'href': re.compile("^https://")})
+    coords_1 = [link.get('href') for link in coords_1][0]
+    full_offer_info['coordinates'] = coords_1.split('ll=')[1].split('&')[0]
 
+    try:    
+            details_equipment = soup.find('div', {'class':'offer-features__row'})
+            details_equipment = details_equipment.find_all('li', {'class':"parameter-feature-item"})
+            full_offer_info["equipment"] = "|".join([item.get_text().strip() for item in details_equipment])
+    except AttributeError as ae:
+            full_offer_info["equipment"] = "NO_INFORMATION"
+            logger.error(f"Unable to find equipment element - most probably it does not exist. LINK: {link}") 
 
+    return full_offer_info
+
+def scrape_new_layout(soup:bs4.BeautifulSoup, link):
+    logger.info("Using new layout scraper")
+    full_offer_info = {}
+    try:
+            title_reg = re.compile('offer-title.big-text.*')
+            full_offer_info['offer_title'] = soup.find('h3', {'class':title_reg}).get_text().strip()
+    except AttributeError as ae:
+            logger.error(f"Unable to fetch offer title. LINK: {link}")
+            return AttributeError("No Title Information")
+    price_reg = re.compile("offer-price__number.*")
+    full_offer_info['price'] = soup.find('h3', {'class':price_reg}).get_text().strip()
+    
+    details_reg = re.compile('.*e1iqsx44')
+    details_group = soup.find('div', {'class':details_reg})
+    detail_reg_2 = re.compile('.*e1iqsx43')
+    details_group = details_group.find_all('div', {'class':detail_reg_2})
+    separate_details = []
+    for detail_container in details_group:
+        name_reg = re.compile('.*ooa-1h25pzj')
+        detail_name = detail_container.find('p', {'class':name_reg}).get_text().strip()
+        try:
+            value_reg = re.compile('.*ooa-189feh2')
+            detail_value = detail_container.find('a',{'class':value_reg}).get_text().strip()
+        except AttributeError as ae:
+            try:
+                value_reg = re.compile('e1cl5iuz1 ooa-ywgrlx er34gjf0')
+                detail_value = detail_container.find('p',{'class':value_reg}).get_text().strip()
+            except AttributeError as ae:
+                raise ae  
+                
+        separate_details.append(f"{detail_name}:{detail_value}")
         
     full_offer_info["offer_details"] = "|".join(separate_details)
 
@@ -94,10 +147,11 @@ def scrape_data_from_raw(link:str, raw_data_html:str):
     coords_1 = [link.get('href') for link in coords_1][0]
     full_offer_info['coordinates'] = coords_1.split('ll=')[1].split('&')[0]
 
-    try:    
-            details_equipment = soup.find('div', {'id':'rmjs-1'})
-            details_equipment = details_equipment.find_all('li', {'class':"parameter-feature-item"})
-            full_offer_info["equipment"] = "|".join([item.get_text().strip() for item in details_equipment])
+    try:
+        details_equipment = soup.find_all('p', {'class','evccnj10 ooa-1i4y99d er34gjf0'})
+        full_offer_info["equipment"] = "|".join([item.get_text().strip() for item in details_equipment])
+        if full_offer_info == '':
+             full_offer_info["equipment"] = "EMPTY_CONTAINER" 
     except AttributeError as ae:
             full_offer_info["equipment"] = "NO_INFORMATION"
             logger.error(f"Unable to find equipment element - most probably it does not exist. LINK: {link}") 

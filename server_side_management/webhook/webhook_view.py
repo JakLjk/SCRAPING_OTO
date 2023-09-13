@@ -3,7 +3,7 @@ import json
 
 from config import OperationTypes, ServConfig
 from ..db_management_scripts.insert_link_into_db import add_link_to_db
-from ..db_management_scripts.get_link_from_db import get_link_from_db, update_scrape_status, update_health_status
+from ..db_management_scripts.get_link_from_db import get_link_from_db, update_scrape_status, update_health_status, update_error_message
 from ..db_management_scripts.insert_raw_data_into_db import add_raw_data_to_db
 from ..db_management_scripts.raw_page_interpreter_methods import get_raw_from_db, push_offer_details_parsed_to_db, update_etl_status_performed
 from ..db_management_scripts.populate_helper_table_methods import fetch_row_from_db, get_currently_available_column_names, add_column, insert_data_into_helper_table
@@ -55,8 +55,9 @@ def data_hook():
         
         elif OperationTypes.raw_data_to_db == data["Operation"]:
             raw_data = data["rawData"]
+            webpage_style = data['webpageStyle']
             used_link = data["usedLink"] 
-            add_raw_data_to_db(raw_data, used_link)
+            add_raw_data_to_db(raw_data, webpage_style, used_link)
             return jsonify({"Status": OperationTypes.status_success})
         
         elif OperationTypes.get_raw_data == data["Operation"]:
@@ -67,9 +68,11 @@ def data_hook():
                 return ({"Status":OperationTypes.status_failed,
                   "statusComment":ve})
             link = raw_data.Used_Link
+            webpage_style = raw_data.Webpage_Layout_Version
             raw_data = raw_data.Raw_Data
             return jsonify({"Status": OperationTypes.status_success,
                                 "Link":link,
+                                "webpageStyle":webpage_style,
                                 "rawData":raw_data})
 
         elif OperationTypes.push_offer_details_to_db == data["Operation"]:
@@ -129,6 +132,12 @@ def data_hook():
             table_name = data["tableName"]
             insert_dict = data["insertDict"]
             insert_data_into_helper_table(table_name, insert_dict)
+            return jsonify({"Status": OperationTypes.status_success})
+        
+        elif OperationTypes.update_error_message == data["Operation"]:
+            link = data["Link"]
+            err_msg = data["errorMessage"]
+            update_error_message(link, err_msg)
             return jsonify({"Status": OperationTypes.status_success})
 
 

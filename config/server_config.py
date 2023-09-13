@@ -15,6 +15,7 @@ class DBTableConfig:
     links_table_scrape_status_not_scraped = "NOT_SCRAPED"
     links_table_scrape_status_being_scraped = "IN_SCRAPING"
     links_table_scrape_status_scraped = "WAS_SCRAPED"
+    links_table_scrape_status_error = "ERROR"
 
     raw_data_table_etl_not_performed = "NOT_PERFORMED"
     raw_data_table_etl_performed = "PERFORMED"
@@ -32,6 +33,7 @@ class OperationTypes:
     get_currently_available_column_names = "GET_AVAILABLE_COLUMN_NAMES"
     add_column_to_table = "ADD_COLUMN"
     insert_data_into_helper_table = "ADD_DATA+TO_HELPER"
+    update_error_message = "UPDATE_ERROR_MESSAGE"
  
     status_success = "SUCCESS"
     status_failed = "FAILED"
@@ -40,3 +42,4 @@ class OperationTypes:
 
     link_health_status_good = "GOOD"
     link_health_status_broken = "BROKEN"
+

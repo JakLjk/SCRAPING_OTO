@@ -13,16 +13,18 @@ from sqlalchemy import select, exists, insert
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException, WebDriverException, ElementClickInterceptedException
+from selenium.common.exceptions import TimeoutException, WebDriverException, ElementClickInterceptedException, NoSuchElementException
 
 from time import sleep, time, strftime, gmtime
 from datetime import datetime
 
 import bs4
 
-from client_access_methods.get_link import get_link, change_link_status, change_link_health_status
+from client_access_methods.get_link import get_link, change_link_status, update_error_message
 from client_access_methods.post_raw_page_data import post_raw_data
 from config import OperationTypes, DBTableConfig
+
+# from dummy import get_link, change_link_status, update_error_message,post_raw_data
 
 def scrape_offer():
     # Wait time for new link to scrape, if there are no links to scrape available
@@ -39,53 +41,80 @@ def scrape_offer():
     concurrent_load_title_errors = 0
 
     while True:
-        logger.info('=================================================')
-        current_iteration_begin_time = time()
-        num_of_pages_parsed += 1
-
-        logger.info(f"Fetching link to scrape from db...")
-
-        # get link which was not scraped earlier, is not already scraped
-        link_data = get_link()
-        status = link_data["Status"]
-        link = link_data["Link"]
-        if not status == OperationTypes.status_success:
-                logger.info(f"There was an issue with fetching link from db. Retrying in {wait_for_link_to_scrape} seconds.")
-                sleep(wait_for_link_to_scrape)
-                continue
-        
-        logger.info(f"Link selected: {link}")
-
-        page_html = None
-
         try:
-            page_html = init_driver_scrape_process(link)
-        except AttributeError:
-            if concurrent_load_title_errors >= max_concurrent_repeats:
-                logger.info(f"Max retries amount exceeded, marking link as broken")
-                change_link_health_status(link, OperationTypes.link_health_status_broken)
-                logger.info(f"Link marked as broken: {link}")
-            else:
-                logger.info(f"Attribute error has appeared, resuming scraping process in {wait_time_after_improper_page_load} seconds")
-                concurrent_load_title_errors += 1
-                sleep(wait_time_after_improper_page_load)
+            logger.info('=================================================')
+            current_iteration_begin_time = time()
+            num_of_pages_parsed += 1
+
+            logger.info(f"Fetching link to scrape from db...")
+
+            # get link which was not scraped earlier, is not already scraped
+            link_data = get_link()
+            status = link_data["Status"]
+            link = link_data["Link"]
+            if not status == OperationTypes.status_success:
+                    logger.info(f"There was an issue with fetching link from db. Getting different link in {wait_for_link_to_scrape} seconds.")
+                    update_error_message(link, f"There was an issue with fetching link from db. Getting different link in {wait_for_link_to_scrape} seconds.")
+                    change_link_status(link, DBTableConfig.links_table_scrape_status_error)
+                    sleep(wait_for_link_to_scrape)
+                    continue
+            
+            logger.info(f"Link selected: {link}")
+
+            page_html = None
+
+            # try:
+            #     page_html, webpage_style = init_driver_scrape_process(link)
+            # except AttributeError as ae:
+            #     if concurrent_load_title_errors >= max_concurrent_repeats:
+            #         logger.info(f"Max retries amount exceeded, marking link as broken")
+            #         update_error_message(link, str(ae))
+            #         change_link_status(link, DBTableConfig.links_table_scrape_status_error)
+            #         logger.info(f"Link marked as error: {link}")
+            #         continue
+            #     else:
+            #         logger.info(f"Attribute error has appeared, resuming scraping process in {wait_time_after_improper_page_load} seconds")
+            #         concurrent_load_title_errors += 1
+            #         sleep(wait_time_after_improper_page_load)
+
+            try:
+                page_html, webpage_style = init_driver_scrape_process(link)
+            except AttributeError as ae:
+                update_error_message(link, str(ae))
+                change_link_status(link, DBTableConfig.links_table_scrape_status_error)
+                logger.info(f"Link marked as error: {link}")
+                continue
+            except NoSuchElementException as nsee:
+                update_error_message(link, str(nsee))
+                change_link_status(link, DBTableConfig.links_table_scrape_status_error)
+                logger.info(f"Link marked as error: {link}")
                 continue
 
-        concurrent_load_title_errors = 0
+            # concurrent_load_title_errors = 0
 
-        if page_html is None:
-                logger.error("Received empty from scrape function, skipping...")
-                continue
+            if page_html is None:
+                    logger.error("Received empty from scrape function, skipping...")
+                    update_error_message(link, "Received empty from scrape function, skipping...")
+                    change_link_status(link, DBTableConfig.links_table_scrape_status_error)
+                    continue
 
-        logger.info(f"Inserting offer raw data into db.")
-        post_raw_data(raw_data=page_html,
-                        used_link=link)
+            logger.info(f"Inserting offer raw data into db.")
+            post_raw_data(raw_data=page_html,
+                          webpage_stype = webpage_style,
+                            used_link=link)
 
-        logger.info(f"Updating 'Scrape_Staus' in links table to {DBTableConfig.links_table_scrape_status_scraped}")
-        change_link_status(link, DBTableConfig.links_table_scrape_status_scraped )
-        this_iter_time = strftime('%M:%S', gmtime(time() - current_iteration_begin_time))
-        whole_process_time = strftime('%H:%M:%S', gmtime(time() - main_scrape_begin_time))
-        logger.info(f"Current iteration took {this_iter_time}. Whole process is taking: {whole_process_time}.")
+            logger.info(f"Updating 'Scrape_Staus' in links table to {DBTableConfig.links_table_scrape_status_scraped}")
+            
+            change_link_status(link, DBTableConfig.links_table_scrape_status_scraped )
+            this_iter_time = strftime('%M:%S', gmtime(time() - current_iteration_begin_time))
+            whole_process_time = strftime('%H:%M:%S', gmtime(time() - main_scrape_begin_time))
+            logger.info(f"Current iteration took {this_iter_time}. Whole process is taking: {whole_process_time}.")
+        except Exception as ex:
+            update_error_message(link, str(ex))
+            change_link_status(link, DBTableConfig.links_table_scrape_status_error)
+            raise ex 
+             
+             
 
 def init_driver_scrape_process(link):
     """Returns None in case of error"""
@@ -97,7 +126,7 @@ def init_driver_scrape_process(link):
     run_headless = Config.SeleniumDriverSetup.DRIVER_HEADLESS
 
 
-    logger.info(f"Initializing selenium webdriver")
+    logger.info(f"---Initializing selenium webdriver---")
     driver = pick_selenium_driver(driver_type, run_headless)
     # Try to load offer page link
     try:
@@ -143,19 +172,32 @@ def init_driver_scrape_process(link):
             logger.info(f"Closing driver session.")
             driver.quit()
             return None
+    
+
+    webpage_style = None
+
+    logger.info("Ascertaining that webpage was loaded properly and discovering webpage layout [legacy/new]")
+    try: 
+        driver.find_element(By.CSS_SELECTOR, "h1.offer-title.big-text")
+        webpage_style = "OLD"
+    except:
+        try:
+            driver.find_element(By.CSS_SELECTOR, "h3.offer-title.big-text")
+            webpage_style = "NEW"
+
+        except NoSuchElementException as nsee:
+             logger.error("Could not locate the title which is used to ascert that webpage was loaded properly")
+             driver.quit()
+             raise NoSuchElementException
+        
+    assert webpage_style, "Problem with generating "
+
 
     logger.info(f"Closing driver session.")
     page_html = driver.page_source
     driver.quit()
     logger.info("Driver session closed")
 
-    logger.info("asserting data structure by checking if specific html elements were loaded...")
-    soup = bs4.BeautifulSoup(page_html, 'html.parser')
-    try:
-        offer_title = soup.find('h1', {'class':'offer-title big-text'}).get_text().strip()
-    except AttributeError:
-         logger.error(f"Could not find offer data, most probably site was not loaded completely. {link}")
-         raise AttributeError("No offer title available")
 
-
-    return page_html
+    driver.quit()
+    return page_html, webpage_style

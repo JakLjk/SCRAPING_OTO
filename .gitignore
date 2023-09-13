@@ -2,7 +2,10 @@
 todo.txt
 sqlalchemy_t.py
 test.py
+dummy.py
+test.txt
 logs
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
