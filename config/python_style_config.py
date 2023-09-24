@@ -40,9 +40,9 @@ class Config:
         # Bool provided as value in dict means that links for 
         # specified voivodeship are to be scraped
         VOIVODESHIPS = {"slaskie":False,
-                        "dolnoslaskie":True,
-                        "kujawsko-pomorskie":True,
-                        "lubelskie":True,
+                        "dolnoslaskie":False,
+                        "kujawsko-pomorskie":False,
+                        "lubelskie":False,
                         "lodzkie":False,
                         "malopolskie":False,
                         "mazowieckie":False,
@@ -51,9 +51,9 @@ class Config:
                         "podlaskie":False,
                         "pomorskie":False,
                         "swietokrzyskie":False,
-                        "warminsko-mazurskie":False,
-                        "wielkopolskie":False,
-                        "zachodniopomorskie":False}
+                        "warminsko-mazurskie":True,
+                        "wielkopolskie":True,
+                        "zachodniopomorskie":True}
         
         UNWANTED_MANUFACTURER_NAMES = ["Wybierz",
                                        "Popularne"]

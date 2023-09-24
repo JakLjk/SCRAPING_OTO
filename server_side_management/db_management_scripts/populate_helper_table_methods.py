@@ -15,7 +15,7 @@ def fetch_row_from_db():
         result = conn.execute(sql)
         result = result.first()
     if result:
-        return result.first()
+        return result
     else:
         raise ValueError("No result returned from db")
     

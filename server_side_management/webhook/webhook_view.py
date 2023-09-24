@@ -67,43 +67,54 @@ def data_hook():
                 logger.warning(ve)
                 return ({"Status":OperationTypes.status_failed,
                   "statusComment":ve})
+            id = raw_data.ID_O
             link = raw_data.Used_Link
             webpage_style = raw_data.Webpage_Layout_Version
             raw_data = raw_data.Raw_Data
             return jsonify({"Status": OperationTypes.status_success,
+                                "id":id,
                                 "Link":link,
                                 "webpageStyle":webpage_style,
                                 "rawData":raw_data})
 
         elif OperationTypes.push_offer_details_to_db == data["Operation"]:
-            link = data["link"]
-            offer_title = data["offer_title"] 
-            offer_price = data["offer_price"]
-            offer_details = data["offer_details"]
-            offer_equipment_details = data["offer_equipment_details"]
-            offer_coordinates = data["offer_coordinates"]
+            import sqlalchemy
             try:
-                push_offer_details_parsed_to_db(link,
-                                                offer_title,
-                                                offer_price,
-                                                offer_details,
-                                                offer_equipment_details,
-                                                offer_coordinates)
-                return jsonify({"Status": OperationTypes.status_success})
-            except ValueError as ve:
-                logger.info(ve)
-                ({"Status":OperationTypes.status_failed,
-                  "statusComment":ve})
-        
+                link = data["link"]
+                offer_title = data["offer_title"]
+                offer_price = data["offer_price"]
+                offer_details = data["offer_details"]
+                offer_equipment_details = data["offer_equipment_details"]
+                offer_coordinates = data["offer_coordinates"]
+                print('asdasd \n adasdas')
+                print(link)
+                print(offer_title)
+                try:
+                    push_offer_details_parsed_to_db(link,
+                                                    offer_title,
+                                                    offer_price,
+                                                    offer_details,
+                                                    offer_equipment_details,
+                                                    offer_coordinates)
+                    return jsonify({"Status": OperationTypes.status_success})
+                except ValueError as ve:
+                    logger.info(ve)
+                    ({"Status":OperationTypes.status_failed,
+                    "statusComment":ve})
+            except sqlalchemy.exc.NotSupportedError:
+                pass
+            
         elif OperationTypes.update_etl_status == data["Operation"]:
+            id = data["id"]
             link = data["Link"]
             new_status = data["New_Status"]
-            update_etl_status_performed(link, new_status)
+            update_etl_status_performed(id, link, new_status)
             return jsonify({"Status": OperationTypes.status_success})
         
         elif OperationTypes.get_row_data_for_helper_table == data["Operation"]:
             try:
                 result = fetch_row_from_db()
+                print(result)
                 id = result[0]
                 off_details = result[1]
                 eq_details = result[2]

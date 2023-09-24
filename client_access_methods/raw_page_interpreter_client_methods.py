@@ -9,9 +9,10 @@ def get_raw_data():
         raise ValueError(data["statusComment"])
     return data
 
-def update_etl_status(link, new_status):
+def update_etl_status(raw_data_id, link, new_status):
     request = requests.post(ServConfig.full_webhook_path, json = {
         "Operation":OperationTypes.update_etl_status,
+        "id":raw_data_id,
         "Link":link,
         "New_Status": new_status})
     data = request.json()

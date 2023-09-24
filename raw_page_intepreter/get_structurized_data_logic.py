@@ -24,13 +24,18 @@ def get_structurized_data():
 
         link = raw_data["Link"]
         webpage_style = raw_data["webpageStyle"]
+        raw_data_id = raw_data["id"]
         raw_data = raw_data["rawData"]
+        
 
         logger.info(f"Processing raw data for link {link}")
         scraped_data = scrape_data_from_raw(link,raw_data, webpage_style)
 
         logger.info(f"Inserting processed data into db")
         try:
+            print('xxxxxxx')
+            print('link')
+            print(scraped_data["offer_title"])
             push_offer_details_to_db(link=link,
                                     offer_title=scraped_data["offer_title"],
                                     offer_price=scraped_data["price"],
@@ -39,11 +44,11 @@ def get_structurized_data():
                                     offer_coordinates=scraped_data["coordinates"])
         except ValueError as ve:
             logger.warning(f"{ve}")
-            update_etl_status(link, DBTableConfig.raw_data_table_etl_performed)
+            update_etl_status(raw_data_id, link, DBTableConfig.raw_data_table_etl_performed)
             continue
         logger.info(f"Processed data was inserted into db.")
         logger.info(f"Setting ETL processed status as True for link {link}")
         # set_link_scrape_status_to_true(link)
-        update_etl_status(link, DBTableConfig.raw_data_table_etl_performed)
+        update_etl_status(raw_data_id, link, DBTableConfig.raw_data_table_etl_performed)
         logger.info(f"Process finished for link {link}")
         logger.info("++++++++++++++++++++++++++++++++++++++++++++")

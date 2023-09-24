@@ -2,7 +2,7 @@ class ServConfig:
     DB_USERNAME = "dummy"
     DB_PASSWORD = "dummy"
     DB_HOST = ""
-    DATABASE_NAME = "otomoto"
+    DATABASE_NAME = ""
 
     secret_Key = ""
 

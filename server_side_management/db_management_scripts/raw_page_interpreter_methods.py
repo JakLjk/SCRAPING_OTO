@@ -15,10 +15,10 @@ def get_raw_from_db():
     else:
         raise ValueError("No raw data to provided available")
 
-def update_etl_status_performed(used_link, new_status):
+def update_etl_status_performed(id, used_link, new_status):
     raw_data_row = (raw_offer_data
                     .query
-                    .filter(raw_offer_data.Used_Link == used_link)
+                    .filter(raw_offer_data.ID_O == id)
                     .first())
     raw_data_row.ETL_Performed_Status = new_status
     db.session.commit()
@@ -32,7 +32,17 @@ def push_offer_details_parsed_to_db(link:str,
     details = offer_details_parsed.query.filter(
         offer_details_parsed.Link == link).first()
     if details:
-        raise ValueError("Such details were already scraped")
+            print('////////////ARLEADY IN')
+            print(link)
+            print(type(link))
+        # raise ValueError("Such details were already scraped")
+            details.Link = link
+            details.Offer_Title = offer_title
+            details.Offer_Price = offer_price
+            details.Offer_Details = offer_details
+            details.Equipment_Details = offer_equipment_details
+            details.Coordinates = offer_coordinates
+            db.session.commit()
     else:
         new_details = offer_details_parsed(
             Link = link,
